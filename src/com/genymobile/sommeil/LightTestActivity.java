@@ -285,7 +285,12 @@ public class LightTestActivity extends Activity implements Runnable {
 		val += (int) lo & 0xff;
 		return val;
 	}
-
+	
+	private void manageMessage(byte[] buffer) {
+		
+		Log.d("LIGHT", "RECEIVED: "+buffer);
+	}
+	
 	/* 
 	 * Réception des commandes
 	 * 
@@ -293,44 +298,39 @@ public class LightTestActivity extends Activity implements Runnable {
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		try {
-			int ret = 0;
-			byte[] buffer = new byte[16384];
-			int i;
-
-			while (ret >= 0) {
-				try {
-					ret = mInputStream.read(buffer);
-				} catch (IOException e) {
-					break;
-				}
-
-				i = 0;
-				while (i < ret) {
-					int len = ret - i;
-
-					switch (buffer[i]) {
-
-					case 0x5:
-						if (len >= 3) {
-							Message m = Message.obtain(mHandler, MESSAGE_LIGHT);
-							m.obj = new LightMsg(composeInt(buffer[i + 1],
-									buffer[i + 2]));
-							mHandler.sendMessage(m);
+	
+		int read = 0;
+		int count = 0;
+		int bufSize = 1024;
+		byte[] buffer = new byte[bufSize];
+		byte[] token;
+		
+		while (true) {
+			
+			try {
+				read = mInputStream.read(buffer, count, bufSize);
+				count += read;
+				
+				for (int i = 0; i < count; i++) {
+					
+					if (buffer[i] == 'M') {
+						
+						int length = buffer[++i];
+						if (length > 0) {
+							
+							token = new byte[length];
+							for (int j = 0; i < count && j < length;) {
+								token[j++] = buffer[i++];
+							}
+							
+							manageMessage(token);
 						}
-						i += 3;
-						break;
-
-					default:
-						Log.d(TAG, "unknown msg: " + buffer[i]);
-						i = len;
-						break;
 					}
 				}
-
+				
+			} catch (IOException e) {
+				break;
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 
