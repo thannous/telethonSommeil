@@ -1,6 +1,7 @@
 package com.genymobile.sommeil;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Locale;
 import java.util.Random;
 
@@ -9,11 +10,14 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,22 +33,31 @@ public class AlarmReceiverActivity extends Activity implements
 		TextToSpeech.OnInitListener {
 	private TextToSpeech mTts;
 	private MediaPlayer mMediaPlayer;
+	private PowerManager.WakeLock wl;
 	static final int ALARM_ID = 1234567;
 	static Alarm alarm;
 	private static final Random RANDOM = new Random();
 	private static final String[] HELLOS = {
-	"Debout Michel, il faut se reveiller",
-
-	"Reveil toi",
+	"prochaine alarme dans dix minutes"
 
 	};
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "My Tag");
+        wl.acquire();
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
+			    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+			    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+			    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
+			    WindowManager.LayoutParams.FLAG_FULLSCREEN |
+			    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+			    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+			    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
 		setContentView(R.layout.alarm);
 		mTts = new TextToSpeech(this, this);
 		Button stopAlarm = (Button) findViewById(R.id.stopAlarm);
@@ -69,11 +82,16 @@ public class AlarmReceiverActivity extends Activity implements
 		});
 
 		playSound(this, getAlarmUri());
+		
 
 	}
 
+	protected void onStop() {
+	    super.onStop();
+	    wl.release();
+	}
 	private void playSound(Context context, Uri alert) {
-		mMediaPlayer = new MediaPlayer();
+		/*mMediaPlayer = new MediaPlayer();
 		try {
 			mMediaPlayer.setDataSource(context, alert);
 			final AudioManager audioManager = (AudioManager) context
@@ -85,17 +103,26 @@ public class AlarmReceiverActivity extends Activity implements
 			}
 		} catch (IOException e) {
 			System.out.println("OOPS");
-		}
+		}*/
+		// recupérer uri
+		Log.d("Alarm", "URI Str: "+alert.toString());
+		 Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), alert);
+	        r.play();
 	}
 
 	private Uri getAlarmUri() {
-		Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+		
+		// recup from shared
+		SharedPreferences sharedPrefs = this.getSharedPreferences("TEST", MODE_PRIVATE);
+		String uriStr = sharedPrefs.getString("ring", 
+				RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM).toString());
+		
+		Log.d("Alarm", "URI Str: "+uriStr);
+		Uri alert = Uri.parse(uriStr);
 		if (alert == null) {
-			alert = RingtoneManager
-					.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+			alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 			if (alert == null) {
-				alert = RingtoneManager
-						.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+				alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
 			}
 		}
 		return alert;

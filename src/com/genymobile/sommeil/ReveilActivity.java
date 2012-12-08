@@ -13,17 +13,29 @@ import android.app.TimePickerDialog;
 import android.app.TimePickerDialog.OnTimeSetListener;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.graphics.Typeface;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.DigitalClock;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
 public class ReveilActivity extends Activity implements OnTimeSetListener {
 	static final int ALARM_ID = 1234567;
 	static Alarm alarm;
+	int savetype;
+	public static final int CODE_RETOUR = 0;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -33,6 +45,24 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 		super.onCreate(savedInstanceState);
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_main);
+		
+		DigitalClock digitalClock = (DigitalClock) findViewById(R.id.digitalClock);
+		Typeface font = Typeface.createFromAsset(getAssets(), "SueEllenFrancisco.ttf");
+		
+		
+		Button selectSonnerie = (Button) findViewById(R.id.selectSonnerie);
+		selectSonnerie.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(
+						RingtoneManager.ACTION_RINGTONE_PICKER);
+				intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE,
+						RingtoneManager.TYPE_ALL);
+				intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE,
+						"Select sonnerie");
+				startActivityForResult(intent, CODE_RETOUR);
+			}
+		});
 
 		// Affichage
 		affichage();
@@ -40,6 +70,107 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 		// Planification
 		planifierAlarm();
 
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+		// Vérification du code de retour
+		if (requestCode == CODE_RETOUR) {
+			// Vérifie que le résultat est OK
+			if (resultCode == RESULT_OK) {
+				
+				 Uri uri = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
+				 // stocker uri
+				 
+				 SharedPreferences sharedPrefs = this.getSharedPreferences("TEST", MODE_PRIVATE);
+				 Editor editor = sharedPrefs.edit();
+				 editor.putString("ring", uri.toString());
+				 editor.commit();
+				 
+				 Log.d("Alarm", "SETTING Ring: "+uri.toString());
+			        
+			        /*
+				 if (uri != null) {
+					 String ringtone = uri.getPath();
+					 SoundPool ring =  new SoundPool(2, AudioManager.STREAM_RING, 1);
+					 int soundID = ring.load(ringtone, 1);
+			
+				 String ringTonePath = uri.toString();
+					Toast.makeText(this, "Votre nom est : " + ringTonePath,
+							Toast.LENGTH_SHORT).show();
+					
+					saveas(soundID,uri);
+				 }
+				*/
+				// Si l'activité est annulé
+			} else if (resultCode == RESULT_CANCELED) {
+				// On affiche que l'opération est annulée
+				Toast.makeText(this, "Opération annulé", Toast.LENGTH_SHORT)
+						.show();
+			}
+		}
+	}
+
+	public boolean saveas(int soundID, Uri uri) {
+		byte[] buffer = null;
+//		InputStream fIn = getBaseContext().getResources().openRawResource(soundID);
+//		int size = 0;
+//		try {
+//			size = fIn.available();
+//			buffer = new byte[size];
+//			fIn.read(buffer);
+//			fIn.close();
+//		} catch (IOException e) {
+//			Log.e("error", e.toString());
+//			return false;
+//		}
+
+		String path = Environment.getExternalStorageDirectory().getPath()
+				+ "/media/audio/ringtones/";
+		String filename = "examplefile" + ".ogg";
+//
+//		boolean exists = (new File(path)).exists();
+//		if (!exists) {
+//			new File(path).mkdirs();
+//		}
+//
+//		FileOutputStream save;
+//		try {
+//			save = new FileOutputStream(path + filename);
+//			save.write(buffer);
+//			save.flush();
+//			save.close();
+//		} catch (FileNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			return false;
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			return false;
+//		}
+		sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
+				Uri.parse("file://" + path + filename)));
+//
+//		File k = new File(path, filename);
+//
+//		ContentValues values = new ContentValues();
+//		values.put(MediaStore.MediaColumns.DATA, k.getAbsolutePath());
+//		values.put(MediaStore.MediaColumns.TITLE, "exampletitle");
+//		values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg");
+//		values.put(MediaStore.Audio.Media.ARTIST, "cssounds ");
+//		values.put(MediaStore.Audio.Media.IS_RINGTONE, true);
+//		values.put(MediaStore.Audio.Media.IS_NOTIFICATION, true);
+//		values.put(MediaStore.Audio.Media.IS_ALARM, true);
+//		values.put(MediaStore.Audio.Media.IS_MUSIC, false);
+//
+//		// Insert it into the database
+//		Uri newUri = this.getContentResolver()
+//				.insert(MediaStore.Audio.Media.getContentUriForPath(k
+//						.getAbsolutePath()), values);
+
+		RingtoneManager.setActualDefaultRingtoneUri(this, RingtoneManager.TYPE_RINGTONE, uri);
+
+		return true;
 	}
 
 	private void affichage() {
@@ -166,5 +297,4 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 				.show();
 	}
 
-	
 }
