@@ -60,9 +60,6 @@ void loop()
 	if (Serial.available() > 0) {
 		byte incomingByte;
                 incomingByte = Serial.read();
-
-                Serial.print("zigbee: ");
-                Serial.println(incomingByte);
         }
 
 	if (acc.isConnected()) {
@@ -86,9 +83,10 @@ void loop()
 			Serial.println("");
 		    }
 		}
-	} else {
-		error_led();
 
+	}
+	while(Serial.available()) {
+		Serial.read();
 	}
 	delay(10);
 }
