@@ -41,7 +41,7 @@
             android:name="com.genymobile.sommeil.ReveilActivity"
             android:label="@string/app_name" android:theme="@android:style/Theme.Light" />
         <activity android:name="org.achartengine.GraphicalActivity" />
-        <activity android:name="DashBoardActivity" >
+        <activity android:name="SplashActivity" >
         	<intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -55,6 +55,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        <activity android:name="DashBoardActivity" />
     </application>
 
 </manifest>
