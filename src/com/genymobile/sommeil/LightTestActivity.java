@@ -45,23 +45,24 @@ public class LightTestActivity extends Activity implements Runnable {
 	ParcelFileDescriptor mFileDescriptor;
 	FileInputStream mInputStream;
 	FileOutputStream mOutputStream;
-	
+
 	ToggleButton mToggleButton;
 	SeekBar mSeekBar;
-	
+
 	ToggleButton mToggleButton2;
 	SeekBar mSeekBar2;
-	
+	Thread thread;
+
 	private static final byte LIGHT_COMMAND = 'L';
-	
+
 	private static final int MESSAGE_LIGHT = 3;
-	
+
 	private static final int LIGHT_OFF = 0;
 	private static final int LIGHT_MAX = 255;
-	
+
 	private static final byte LIGHT_ONE = 0;
 	private static final byte LIGHT_TWO = 1;
-	
+
 	protected class LightMsg {
 		private int light;
 
@@ -73,7 +74,7 @@ public class LightTestActivity extends Activity implements Runnable {
 			return light;
 		}
 	}
-	
+
 	private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -95,6 +96,7 @@ public class LightTestActivity extends Activity implements Runnable {
 				if (accessory != null && accessory.equals(mAccessory)) {
 					closeAccessory();
 				}
+				finish();
 			}
 		}
 	};
@@ -119,12 +121,12 @@ public class LightTestActivity extends Activity implements Runnable {
 		setContentView(R.layout.main);
 		mSeekBar = (SeekBar) findViewById(R.id.lightSeekBar);
 		mToggleButton = (ToggleButton) findViewById(R.id.toggleLight);
-		
+
 		mSeekBar2 = (SeekBar) findViewById(R.id.lightSeekBar2);
 		mToggleButton2 = (ToggleButton) findViewById(R.id.toggleLight2);
-		
+
 		mToggleButton.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				if (mToggleButton.isChecked()) {
@@ -136,7 +138,7 @@ public class LightTestActivity extends Activity implements Runnable {
 		});
 
 		mToggleButton2.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				if (mToggleButton2.isChecked()) {
@@ -146,19 +148,19 @@ public class LightTestActivity extends Activity implements Runnable {
 				}
 			}
 		});
-		
+
 		mSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			
+
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
-				
+
 			}
-			
+
 			@Override
 			public void onStartTrackingTouch(SeekBar seekBar) {
-				
+
 			}
-			
+
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress,
 					boolean fromUser) {
@@ -167,17 +169,17 @@ public class LightTestActivity extends Activity implements Runnable {
 		});
 
 		mSeekBar2.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			
+
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
-				
+
 			}
-			
+
 			@Override
 			public void onStartTrackingTouch(SeekBar seekBar) {
-				
+
 			}
-			
+
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress,
 					boolean fromUser) {
@@ -185,7 +187,7 @@ public class LightTestActivity extends Activity implements Runnable {
 			}
 		});
 
-		
+
 		enableControls(false);
 	}
 
@@ -245,7 +247,7 @@ public class LightTestActivity extends Activity implements Runnable {
 			FileDescriptor fd = mFileDescriptor.getFileDescriptor();
 			mInputStream = new FileInputStream(fd);
 			mOutputStream = new FileOutputStream(fd);
-			Thread thread = new Thread(null, this, "LightActivity");
+			thread = new Thread(null, this, "LightActivity");
 			thread.start();
 			Log.d(TAG, "accessory opened");
 			enableControls(true);
@@ -255,6 +257,10 @@ public class LightTestActivity extends Activity implements Runnable {
 	}
 
 	private void closeAccessory() {
+		if (thread != null) {
+			thread.interrupt();
+			thread = null;
+		}
 		enableControls(false);
 
 		try {
@@ -265,6 +271,8 @@ public class LightTestActivity extends Activity implements Runnable {
 		} finally {
 			mFileDescriptor = null;
 			mAccessory = null;
+			mInputStream = null;
+			mOutputStream = null;
 		}
 	}
 
@@ -285,40 +293,44 @@ public class LightTestActivity extends Activity implements Runnable {
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		int ret = 0;
-		byte[] buffer = new byte[16384];
-		int i;
+		try {
+			int ret = 0;
+			byte[] buffer = new byte[16384];
+			int i;
 
-		while (ret >= 0) {
-			try {
-				ret = mInputStream.read(buffer);
-			} catch (IOException e) {
-				break;
-			}
-
-			i = 0;
-			while (i < ret) {
-				int len = ret - i;
-
-				switch (buffer[i]) {
-
-				case 0x5:
-					if (len >= 3) {
-						Message m = Message.obtain(mHandler, MESSAGE_LIGHT);
-						m.obj = new LightMsg(composeInt(buffer[i + 1],
-								buffer[i + 2]));
-						mHandler.sendMessage(m);
-					}
-					i += 3;
-					break;
-
-				default:
-					Log.d(TAG, "unknown msg: " + buffer[i]);
-					i = len;
+			while (ret >= 0) {
+				try {
+					ret = mInputStream.read(buffer);
+				} catch (IOException e) {
 					break;
 				}
-			}
 
+				i = 0;
+				while (i < ret) {
+					int len = ret - i;
+
+					switch (buffer[i]) {
+
+					case 0x5:
+						if (len >= 3) {
+							Message m = Message.obtain(mHandler, MESSAGE_LIGHT);
+							m.obj = new LightMsg(composeInt(buffer[i + 1],
+									buffer[i + 2]));
+							mHandler.sendMessage(m);
+						}
+						i += 3;
+						break;
+
+					default:
+						Log.d(TAG, "unknown msg: " + buffer[i]);
+						i = len;
+						break;
+					}
+				}
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
