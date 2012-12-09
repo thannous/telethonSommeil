@@ -1,0 +1,98 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0a2d43" >
+	
+    <RelativeLayout
+		android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:paddingBottom="20dp"
+	    android:orientation="vertical" >
+
+    	<TextView 
+			android:id="@+id/sleepillow"
+			android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:background="#ececec"
+		    android:layout_alignParentLeft="true"
+		    android:layout_alignParentRight="true"
+		    android:textSize="40dp"
+		    android:gravity="center"
+		    android:paddingTop="5dp"
+		    android:paddingBottom="5dp"
+		    android:text="SLEEPILLOW"
+		    android:textColor="#092a3f" />
+		
+    	<ImageButton
+    		android:id="@+id/dashBtn"
+    		android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:src="@drawable/picto_dashboard"
+		    android:layout_alignParentTop="true"
+		    android:layout_alignParentLeft="true"
+		    android:layout_alignBottom="@+id/sleepillow"
+		    android:layout_centerVertical="true"
+		    android:layout_marginLeft="10dp"
+		    android:background="#00000000" />
+    		
+    	<com.genymobile.sommeil.DigitalClock
+	        android:id="@+id/currentTime"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_centerHorizontal="true"
+	        android:textColor="#ececec"
+	        android:layout_marginTop="-40dp"
+	        android:layout_marginBottom="-30dp"
+	        android:layout_below="@+id/sleepillow"
+	        android:textSize="140sp" />
+	    
+    	<ImageView 
+    		android:id="@+id/pictoStats"
+    		android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@+id/currentTime"
+	        android:layout_alignLeft="@+id/loadBar"
+	        android:src="@drawable/picto_stats" />
+    	
+    	<ImageView 
+    		android:id="@+id/pictoAlarme"
+    		android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignBottom="@+id/pictoStats"
+	        android:src="@drawable/picto_alarme" 
+	        android:layout_marginRight="20dp"
+	        android:layout_toLeftOf="@+id/textAlarme"/>
+    	
+    	<TextView
+    		android:id="@+id/textAlarme"
+    		android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignBottom="@+id/pictoAlarme"
+	        android:textColor="#ececec"
+	        android:text="8:30"
+	        android:layout_marginTop="-20dp"
+	        android:layout_marginBottom="-30dp"
+	        android:layout_alignRight="@+id/loadBar"
+	        android:textSize="60sp" />
+    	
+    	<ImageView 
+    		android:id="@+id/loadBar"
+    		android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@+id/textAlarme"
+	        android:layout_marginTop="30dp"
+	        android:layout_centerHorizontal="true"
+	        android:src="@drawable/load_bar" />
+    	
+		<Button
+	    	android:id="@+id/testStatsBtn"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_margin="30dp"
+	        android:layout_centerHorizontal="true"
+	        android:layout_below="@+id/loadBar"
+	        android:background="@drawable/selector_button_03" />
+		
+	</RelativeLayout>
+</ScrollView>
