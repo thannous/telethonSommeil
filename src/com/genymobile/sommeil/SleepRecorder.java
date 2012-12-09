@@ -17,8 +17,8 @@ import android.util.Log;
 public class SleepRecorder {
     public class SleepPoint {
         private long mTime = 0;
-        private int mMouvement = 0;
-        SleepPoint(long time, int mouvement) {
+        private float mMouvement = 0;
+        SleepPoint(long time, float mouvement) {
             mTime = time;
             mMouvement = mouvement;
         }
@@ -27,15 +27,18 @@ public class SleepRecorder {
             return mTime;
         }
         
-        public int getMouvement() {
+        public float getMouvement() {
             return mMouvement;
         }
     }
     
-    private final String SD_DIR = "SleepPillow";
+    private static final String SD_DIR = "SleepPillow";
+    private static final long FREQ = 1000 ;
     private OutputStreamWriter mStreamWriter;
     private List<SleepPoint> mData = new ArrayList<SleepPoint>();
-
+    private List<SleepPoint> mDataWindow = new ArrayList<SleepPoint>();
+    private long mLastPoint = 0;
+    
     public SleepRecorder(Context context, String name) {
         File parent = new File(context.getExternalCacheDir(), SD_DIR);
         parent.mkdirs();
@@ -50,16 +53,31 @@ public class SleepRecorder {
 
     public void addValue(int value) {
         long now = System.currentTimeMillis();
-        try {
-            mStreamWriter.write(String.format("%d %d\n", now, value));
-            mStreamWriter.flush();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        
+        mDataWindow.add(new SleepPoint(now, value));
+        if( now > mLastPoint + FREQ ) {
+            mLastPoint = now;
+            int nb = mDataWindow.size();
+            float total = 0;
+            for(SleepPoint pt : mDataWindow) {
+                total += pt.getMouvement();
+            }
+            float average = total / nb;            
+            mDataWindow.clear();
+            
+            synchronized (mData) {
+                mData.add(new SleepPoint(now, average));
+            }
+        
+            try {
+                mStreamWriter.write(String.format("%d %d\n", now, average));
+                mStreamWriter.flush();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
-        synchronized (mData) {
-            mData.add(new SleepPoint(now, value));
-        }
+
     }
 
     public boolean hasValue() {
