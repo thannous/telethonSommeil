@@ -70,7 +70,7 @@ public class SleepRecorder {
             }
         
             try {
-                mStreamWriter.write(String.format("%d %d\n", now, average));
+                mStreamWriter.write(String.format("%d %f\n", now, average));
                 mStreamWriter.flush();
             } catch (IOException e) {
                 // TODO Auto-generated catch block
