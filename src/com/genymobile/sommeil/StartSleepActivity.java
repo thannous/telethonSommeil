@@ -14,15 +14,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.SeekBar;
-import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.ToggleButton;
 
 import com.android.future.usb.UsbAccessory;
@@ -32,7 +31,7 @@ import com.android.future.usb.UsbManager;
  * @author M-F.P
  *
  */
-public class LightTestActivity extends Activity implements Runnable {
+public class StartSleepActivity extends Activity implements Runnable {
 	private static final String TAG = "LightActivity";
 
 	private static final String ACTION_USB_PERMISSION = "com.google.android.DemoKit.action.USB_PERMISSION";
@@ -124,7 +123,7 @@ public class LightTestActivity extends Activity implements Runnable {
 
 		mSeekBar2 = (SeekBar) findViewById(R.id.lightSeekBar2);
 		mToggleButton2 = (ToggleButton) findViewById(R.id.toggleLight2);
-
+/*
 		mToggleButton.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -187,7 +186,13 @@ public class LightTestActivity extends Activity implements Runnable {
 			}
 		});
 
-
+*/
+		
+		mSeekBar2.setVisibility(View.GONE);
+		mSeekBar.setVisibility(View.GONE);
+		mToggleButton.setVisibility(View.GONE);
+		mToggleButton2.setVisibility(View.GONE);
+		
 		enableControls(false);
 	}
 
@@ -214,6 +219,7 @@ public class LightTestActivity extends Activity implements Runnable {
 		if (accessory != null) {
 			if (mUsbManager.hasPermission(accessory)) {
 				openAccessory(accessory);
+				openLightGradient();
 			} else {
 				synchronized (mUsbReceiver) {
 					if (!mPermissionRequestPending) {
@@ -255,7 +261,44 @@ public class LightTestActivity extends Activity implements Runnable {
 			Log.d(TAG, "accessory open fail");
 		}
 	}
-
+	
+	private void openLightGradient() {
+		
+		new AsyncTask<Byte, Integer, Void>() {
+			
+			Byte mCommand;
+			
+			@Override
+			protected Void doInBackground(Byte... command) {
+				
+				mCommand = command[0];
+				
+				int progress;
+				for (progress=0;progress<=100;progress++)
+				{
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					publishProgress(progress);
+					progress++;				
+				}
+				return null;
+			}
+			
+			/* (non-Javadoc)
+			 * @see android.os.AsyncTask#onProgressUpdate(Progress[])
+			 */
+			@Override
+			protected void onProgressUpdate(Integer... progress) {
+				// TODO Auto-generated method stub
+				sendCommand(mCommand, LIGHT_TWO, LIGHT_MAX * progress[0] / 100);
+				super.onProgressUpdate(progress);
+			}
+		}.execute(LIGHT_COMMAND);
+	}
+	
 	private void closeAccessory() {
 		if (thread != null) {
 			thread.interrupt();
