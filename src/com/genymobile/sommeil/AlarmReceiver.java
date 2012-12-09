@@ -16,17 +16,6 @@ public class AlarmReceiver extends BroadcastReceiver{
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		try {
-//			 Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-//			   if(alert == null){
-//			         alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-//			         if(alert == null){
-//			             alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);               
-//			         }
-//			     }
-//			 
-//			 Ringtone r = RingtoneManager.getRingtone(context, alert);
-//			 r.play();
-
 
 			Toast.makeText(context, "C'est l'heure !!!",Toast.LENGTH_LONG).show();
 		

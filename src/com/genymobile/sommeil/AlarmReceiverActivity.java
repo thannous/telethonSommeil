@@ -157,11 +157,11 @@ public class AlarmReceiverActivity extends Activity implements
 			if (result == TextToSpeech.LANG_MISSING_DATA
 					|| result == TextToSpeech.LANG_NOT_SUPPORTED) {
 				// renvoi une erreur sur la console logcat.
-				Log.e( "TAG","Language is not available.");
+				Log.d( "TAG","Language is not available.");
 			}
 		} else {
 			// si la synthèse vocal n'est pas disponible
-			Log.e("TAG", "Could not initialize TextToSpeech.");
+			Log.d("TAG", "Could not initialize TextToSpeech.");
 		}
 
 	}

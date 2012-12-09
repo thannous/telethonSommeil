@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Calendar;
+import java.util.List;
 
 import android.app.Activity;
 import android.app.AlarmManager;
@@ -27,14 +28,18 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.DigitalClock;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import com.genymobile.sommeil.customWidget.DigitalClock;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-public class ReveilActivity extends Activity implements OnTimeSetListener {
+public class ReveilActivity extends Activity implements OnTimeSetListener{
 	static final int ALARM_ID = 1234567;
 	static Alarm alarm;
 	int savetype;
+
 	public static final int CODE_RETOUR = 0;
 
 	@Override
@@ -45,10 +50,18 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 		super.onCreate(savedInstanceState);
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.activity_main);
-		
+//		mAlarmList = (ListView) findViewById(R.id.alarmslist);
+		TextView mTitle = (TextView) findViewById(R.id.sleepillow);
+		TextView mHeure = (TextView) findViewById(R.id.heure);
 		DigitalClock digitalClock = (DigitalClock) findViewById(R.id.digitalClock);
-		Typeface font = Typeface.createFromAsset(getAssets(), "SueEllenFrancisco.ttf");
+		Typeface font = Typeface.createFromAsset(getAssets(),
+				"SueEllenFrancisco.ttf");
 		
+//		mAlarmList.setOnClickListener(this);
+//		mApps = loadInstallAlarm();
+		mTitle.setTypeface(font);
+		mHeure.setTypeface(font);
+		digitalClock.setTypeface(font); 
 		
 		Button selectSonnerie = (Button) findViewById(R.id.selectSonnerie);
 		selectSonnerie.setOnClickListener(new OnClickListener() {
@@ -63,14 +76,21 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 				startActivityForResult(intent, CODE_RETOUR);
 			}
 		});
+		mHeure.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				changeHeure(v);
+			}
+		});
 
 		// Affichage
 		affichage();
 
-		// Planification
-		planifierAlarm();
+		
 
 	}
+
+
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -112,66 +132,7 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 		}
 	}
 
-	public boolean saveas(int soundID, Uri uri) {
-		byte[] buffer = null;
-//		InputStream fIn = getBaseContext().getResources().openRawResource(soundID);
-//		int size = 0;
-//		try {
-//			size = fIn.available();
-//			buffer = new byte[size];
-//			fIn.read(buffer);
-//			fIn.close();
-//		} catch (IOException e) {
-//			Log.e("error", e.toString());
-//			return false;
-//		}
 
-		String path = Environment.getExternalStorageDirectory().getPath()
-				+ "/media/audio/ringtones/";
-		String filename = "examplefile" + ".ogg";
-//
-//		boolean exists = (new File(path)).exists();
-//		if (!exists) {
-//			new File(path).mkdirs();
-//		}
-//
-//		FileOutputStream save;
-//		try {
-//			save = new FileOutputStream(path + filename);
-//			save.write(buffer);
-//			save.flush();
-//			save.close();
-//		} catch (FileNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			return false;
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			return false;
-//		}
-		sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
-				Uri.parse("file://" + path + filename)));
-//
-//		File k = new File(path, filename);
-//
-//		ContentValues values = new ContentValues();
-//		values.put(MediaStore.MediaColumns.DATA, k.getAbsolutePath());
-//		values.put(MediaStore.MediaColumns.TITLE, "exampletitle");
-//		values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg");
-//		values.put(MediaStore.Audio.Media.ARTIST, "cssounds ");
-//		values.put(MediaStore.Audio.Media.IS_RINGTONE, true);
-//		values.put(MediaStore.Audio.Media.IS_NOTIFICATION, true);
-//		values.put(MediaStore.Audio.Media.IS_ALARM, true);
-//		values.put(MediaStore.Audio.Media.IS_MUSIC, false);
-//
-//		// Insert it into the database
-//		Uri newUri = this.getContentResolver()
-//				.insert(MediaStore.Audio.Media.getContentUriForPath(k
-//						.getAbsolutePath()), values);
-
-		RingtoneManager.setActualDefaultRingtoneUri(this, RingtoneManager.TYPE_RINGTONE, uri);
-
-		return true;
-	}
 
 	private void affichage() {
 
@@ -181,9 +142,11 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 		heureReveil += ":";
 		heureReveil += alarm.getHeure().minute > 10 ? alarm.getHeure().minute
 				: "0" + alarm.getHeure().minute;
-		CheckBox ck_alarm = (CheckBox) findViewById(R.id.heure);
+		TextView ck_alarm = (TextView) findViewById(R.id.heure);
 		ck_alarm.setText(heureReveil);
-		ck_alarm.setChecked(alarm.isActive());
+		if(alarm.isActive()){
+		}
+		
 
 	}
 
@@ -193,14 +156,13 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 	 * l'heure de reveil
 	 */
 	public void changeHeure(View target) {
-		CheckBox ck_alarm = (CheckBox) findViewById(R.id.heure);
 
-		// choisir l'heure.
-		if (ck_alarm.isChecked()) {
+		Log.d("Alarm", "SETTING Ring: ");
+		
 			TimePickerDialog dialog = new TimePickerDialog(this, this,
 					alarm.getHeure().hour, alarm.getHeure().minute, true);
 			dialog.show();
-		}
+		
 
 		// On replanifie l'alarme.
 		planifierAlarm();
@@ -269,7 +231,7 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 		intent.putExtra("vibrationPatern", new long[] { 200, 300 });
 
 		PendingIntent pendingintent = PendingIntent.getBroadcast(this,
-				ALARM_ID, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+				ALARM_ID , intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
 		// On annule l'alarm pour replanifier
 		am.cancel(pendingintent);
@@ -296,5 +258,7 @@ public class ReveilActivity extends Activity implements OnTimeSetListener {
 						+ +reveil.get(Calendar.MINUTE), Toast.LENGTH_SHORT)
 				.show();
 	}
+
+	
 
 }
