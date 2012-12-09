@@ -277,7 +277,7 @@ private static final String TAG = "LightActivity";
 
         Log.d("LIGHT", "RECEIVED: " + buffer);
         for (int i = 0; i < buffer.length; ++i) {
-            int realvalue = (int) buffer[i];
+            int realvalue = buffer[i] & 0xFF;
             Log.d("LIGHT", "rec " + realvalue);
             mSleepRecorder.addValue(realvalue);
         }
