@@ -29,10 +29,12 @@ public class SleepStatsChartActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		
 		List<double[]> dataY = new ArrayList<double[]>();
-		dataY.add(new double[] { 4.3, 4.9, 5.9, 8.8, 10.8, 11.9, 13.6, 12.8, 11.4, 9.5, 7.5, 5.5 });
+		dataY.add(new double[] { 4.3, 4.9, 5.9, 8.8, 10.8, 4.9, 13.6, 12.8, 4.4, 9.5, 7.5, 5.5,
+		        4.3, 14, 5.9, 5.8, 5.8, 5, 5, 5.6, 6.8, 11.4, 5.5, 7.5, 5.5});
 		
 		List<double[]> dataX = new ArrayList<double[]>();
-		dataX.add(new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 });
+		dataX.add(new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+		       13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 });
 	    
 		View chart = new SleepStatsChart().create(this, dataX, dataY);
 		

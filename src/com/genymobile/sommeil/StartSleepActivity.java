@@ -23,6 +23,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -48,8 +49,7 @@ private static final String TAG = "LightActivity";
     FileInputStream mInputStream;
     FileOutputStream mOutputStream;
     Thread thread;
-    
-    SleepRecorder mSleepRecorder;
+
 
     private static final byte LIGHT_COMMAND = 'L';
 
@@ -94,7 +94,15 @@ private static final String TAG = "LightActivity";
                 if (accessory != null && accessory.equals(mAccessory)) {
                     closeAccessory();
                 }
-                finish();
+                if(MovingSleepStatsChartActivity.sInstance!=null) {
+                    StartSleepActivity.this.runOnUiThread(new Runnable() {
+                        
+                        @Override
+                        public void run() {
+                    MovingSleepStatsChartActivity.sInstance.finish();
+                }       });
+                    }
+                startActivity(new Intent(StartSleepActivity.this, DashBoardActivity.class));
             }
         }
     };
@@ -104,7 +112,7 @@ private static final String TAG = "LightActivity";
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mSleepRecorder = new SleepRecorder(this, "TEST");
+
         mUsbManager = UsbManager.getInstance(this);
         mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(
                 ACTION_USB_PERMISSION), 0);
@@ -136,6 +144,15 @@ private static final String TAG = "LightActivity";
 				startActivity(intent);
 			}
 		});
+        
+        Button statBtn = (Button) findViewById(R.id.testStatsBtn);
+        statBtn.setOnClickListener(new OnClickListener() {
+            
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(StartSleepActivity.this, MovingSleepStatsChartActivity.class));
+            }
+        });
         
 		enableControls(false);
 	}
@@ -218,7 +235,7 @@ private static final String TAG = "LightActivity";
 	@Override
     public void onPause() {
         super.onPause();
-        closeAccessory();
+        //closeAccessory();
     }
 
     @Override
@@ -279,7 +296,11 @@ private static final String TAG = "LightActivity";
         for (int i = 0; i < buffer.length; ++i) {
             int realvalue = buffer[i] & 0xFF;
             Log.d("LIGHT", "rec " + realvalue);
-            mSleepRecorder.addValue(realvalue);
+
+            if (MovingSleepStatsChartActivity.sInstance != null) {
+            	MovingSleepStatsChartActivity.sInstance.addValue(realvalue);
+            }
+
         }
     }
 
@@ -299,23 +320,26 @@ private static final String TAG = "LightActivity";
 
             try {
                 Log.d(TAG, "read " + read + "size " + buffer.length);
-                read = mInputStream.read(buffer, count, bufSize - count);
-                count += read;
+                if(mInputStream != null) {
+                    Log.d("INPUT", " "+mInputStream);
+                    read = mInputStream.read(buffer, count, bufSize - count);
+                    count += read;
 
-                for (int i = 0; i < count; i++) {
+                    for (int i = 0; i < count; i++) {
 
-                    if (buffer[i] == 'M') {
-                        Log.d(TAG, "I found M");
+                        if (buffer[i] == 'M') {
+                            Log.d(TAG, "I found M");
 
-                        int length = buffer[++i];
-                        if (length > 0) {
-                            Log.d(TAG, "length " + length);
+                            int length = buffer[++i];
+                            if (length > 0) {
+                                Log.d(TAG, "length " + length);
 
-                            token = new byte[length];
-                            for (int j = 0; i < count && j < length;) {
-                                token[j++] = buffer[++i];
+                                token = new byte[length];
+                                for (int j = 0; i < count && j < length;) {
+                                    token[j++] = buffer[++i];
+                                }
+                                manageMessage(token);
                             }
-                            manageMessage(token);
                         }
                     }
                 }

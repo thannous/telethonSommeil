@@ -24,9 +24,14 @@ public class MovingSleepStatsChartActivity extends Activity {
 	List<double[]> mCourbesX = new ArrayList<double[]>();
 	List<double[]> mCourbesY = new ArrayList<double[]>();
 	
+	
+	boolean mUpdating = false;
+	
 	GraphicalView mChart;
 	LinearLayout mContainer;
 	AsyncTask<Void, Integer, Void> mDrawTask;
+	
+	public static MovingSleepStatsChartActivity sInstance = null;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -51,6 +56,8 @@ public class MovingSleepStatsChartActivity extends Activity {
 		setContentView(R.layout.stats);
 		mContainer = (LinearLayout) findViewById(R.id.statsContainer);
 		mContainer.addView(mChart);
+		
+		sInstance = this;
 	}
 	
 	/* (non-Javadoc)
@@ -59,61 +66,8 @@ public class MovingSleepStatsChartActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mDrawTask = new AsyncTask<Void, Integer, Void>() {
-			
-			@Override
-			protected Void doInBackground(Void... command) {
 
-				while (true) {
-					
-					int randInt = new Random().nextInt(30);
-					
-					try {
-						Thread.sleep(200);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					
-					Log.d("MOVING CHART", "PUBLISHING PROGRESS: "+randInt);
-					publishProgress(randInt);
-				}
-			}
-			
-			/* (non-Javadoc)
-			 * @see android.os.AsyncTask#onProgressUpdate(Progress[])
-			 */
-			@Override
-			protected void onProgressUpdate(Integer... progress) {
-				
-				mValuesX.add(mIndex.doubleValue());
-				mValuesY.add(progress[0].doubleValue());
-				
-				mIndex++;
-				
-				mCourbesX.clear();
-				mCourbesY.clear();
-				
-				double[] valuesX = new double[mValuesX.size()];
-				for (int i = 0; i < mValuesX.size(); i++) {
-					valuesX[i] = mValuesX.get(i);
-				}
-				mCourbesX.add(valuesX);
-				
-				double[] valuesY = new double[mValuesY.size()];
-				for (int i = 0; i < mValuesY.size(); i++) {
-					valuesY[i] = mValuesY.get(i);
-				}
-				mCourbesY.add(valuesY);
-				
-				mChart = new SleepStatsChart().create(MovingSleepStatsChartActivity.this, 
-						mCourbesX, mCourbesY);
-				
-				mContainer.removeAllViews();
-				mContainer.addView(mChart);
-				
-				super.onProgressUpdate(progress);
-			}
-		}.execute();
+		sInstance = this;
 	}
 
 	/* (non-Javadoc)
@@ -122,6 +76,73 @@ public class MovingSleepStatsChartActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		mDrawTask.cancel(true);
+		//mDrawTask.cancel(true);
+		
+		sInstance = null;
+	}
+	
+	
+	private List<Integer> mData = new ArrayList<Integer>(); 
+	private long mLastInsert = System.currentTimeMillis();
+	public void addValue(final int realValue) {
+		
+	    long now = System.currentTimeMillis();
+	    mData.add(realValue);
+        int averagetmp = 0;
+	    if( mLastInsert + 1000 > now ) {
+	        int total = 0;
+	        for(Integer in : mData ) {
+	            total += in;
+	        }
+	        averagetmp = total / mData.size();
+	        mData.clear();
+	    } else {
+	        return;
+	    }
+	    final int average = averagetmp;
+	    Log.d("DRAW", "" + average);
+	    
+	    mValuesX.add(mIndex.doubleValue());
+        
+        double realValue2 = ((double)average * 30d) / 255d;
+        Log.d("VALUE", " "+realValue2);
+    
+    mValuesY.add(realValue2);
+    
+    mIndex++;
+    
+    mCourbesX.clear();
+    mCourbesY.clear();
+    
+    double[] valuesX = new double[mValuesX.size()];
+    for (int i = 0; i < mValuesX.size(); i++) {
+        valuesX[i] = mValuesX.get(i);
+    }
+    mCourbesX.add(valuesX);
+    
+    double[] valuesY = new double[mValuesY.size()];
+    for (int i = 0; i < mValuesY.size(); i++) {
+        valuesY[i] = mValuesY.get(i);
+    }
+    mCourbesY.add(valuesY);
+	    
+	    
+	    this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // TODO Auto-generated method stub
+                if(mContainer != null ) {
+                    
+                
+                mChart = new SleepStatsChart().create(MovingSleepStatsChartActivity.this, 
+                        mCourbesX, mCourbesY);
+                
+                mContainer.removeAllViews();
+                mContainer.addView(mChart);
+               // mContainer.invalidate();
+                }
+                
+            }
+        });
 	}
 }
